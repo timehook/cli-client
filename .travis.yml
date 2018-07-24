@@ -4,5 +4,27 @@ go:
   - 1.10.x
 
 script:
-  - ./ci/style.sh
+  - "./ci/style.sh"
   - go test -race ./...
+
+notifications:
+  email:
+    on_success: never
+    on_failure: always
+
+before_deploy:
+  - GOOS=linux go build -o bin/timehook-linux cmd/main/timehook.go
+  - GOOS=darwin go build -o bin/timehook-mac cmd/main/timehook.go
+  - GOOS=windows go build -o bin/timehook.exe cmd/main/timehook.go
+
+deploy:
+  provider: releases
+  api_key:
+    secure: ro1ghTRqLGSHzcWZa7KjyXwdA+1J7+fWZ8pidqflLz7F5bt01S1VTdAOLdhUWS8uGDcq8iGTjWBJYIuO5+ci++U+6GcYdTvf8wuAW9UUnLxN4XBYCbs3UI4o+lRryooGHVCf0K8ykEA7kxSg9rW4kxkRzsnkSpf3GcgnTB6briKyCJVsnbUzTV0wO1qbSf04QlenteH1SEkfFr9/pJKrIP6HqaQKDk2PCZ23DXY+Y7V2AI3QtWIvcPrf548+6EGaHwyicsvMZ435ysNXEr/KWr2R7u2Ftv7xauIMTooMSopxcCcWl6N5AgQJKCrEV/D3mXwxC9yQUNRVbBA94vj9J9Oudwfq9VuMnFsM9XOTJVvcXAwM+U9n+wajutLaWZS4/H6lFFe/FyXg+IGLk9qXi6btX/RcyKbcplQtukiT16/Su+vLd0i+AQPmvZTE4Uux/CLsdiUX6/O526Y+Xm22bJKa+AuBLAJmO5n6BdR35jwj0nqJb071pHFYfWRX/y1yWdGyvRb0txgAfTb+Oifxb04U9P0fsA8bfjDRWdTF9Xf18uYy5mRJ7GPq6vDK/Mp4RYtTBTmmblF+SL5bMVE86hBya27ZIvO6YYHqm5kOYz/J+wrFliJC3NZHh0dsL4oi/1q9kKve9wSbhVRnk9yBjd6dWR9TnB+tSe0iNZvmWA8=
+  file:
+    - bin/timehook-linux
+    - bin/timehook-mac
+    - bin/timehook.exe
+  on:
+    repo: timehook/cli-client
+    tags: true
