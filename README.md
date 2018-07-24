@@ -1,6 +1,6 @@
 # Timehook CLI client
 
-[![Build Status](https://travis-ci.org/timehook/cli-client.svg?branch=master)](https://travis-ci.org/timehook/cli-client)
+[![Build Status](https://travis-ci.com/timehook/cli-client.svg?branch=master)](https://travis-ci.com/timehook/cli-client)
 
 Timehook CLI client is a client implementation to use with [https://api.timehook.io](https://api.timehook.io)
 
