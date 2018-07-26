@@ -41,8 +41,8 @@ type StateResponse struct {
 }
 
 var (
-	errTooManyRequests = errors.New("server responses 429 too many request")
-	errUnauthorized    = errors.New("server responses 401 unauthorized request")
+	ErrTooManyRequests = errors.New("server responses 429 too many request")
+	ErrUnauthorized    = errors.New("server responses 401 unauthorized request")
 )
 
 // client exposes the functions allowed to talk with the Timehook API
@@ -52,29 +52,19 @@ type client struct {
 }
 
 // RegisterAndPoll starts a long running process for a single webhook and
-// returns three channels: first one for regular messages, second one for
-// errors and third one indicates in the overall process was successful.
+// returns RegisterAnPollProcess which can be query to know the process.
 //
 // The process consists in first registers the webhook to be execute on URL
 // with the body given with a delay in seconds.
 // Second it polls the state until it the webhook finishes or until encounter
 // an irrecoverable error.
-func (c *client) RegisterAndPoll(URL, body string, delay int, interval time.Duration) (<-chan string, <-chan string, <-chan bool) {
-	out := make(chan string)
-	errc := make(chan string)
-	succ := make(chan bool)
-
+func (c *client) RegisterAndPoll(URL, body string, sec int, interval time.Duration) *RegisterAnPollProcess {
+	proc := NewRegisterAnPollProcess()
 	go func() {
-		defer close(out)
-		defer close(errc)
-		defer close(succ)
-		stdout := NewOutput()
-
-		out <- stdout.Connecting()
-		rr, err := c.register(URL, body, delay)
+		proc.Connect()
+		rr, err := c.register(URL, body, sec)
 		if err != nil {
-			errc <- stdout.Error(err)
-			succ <- false
+			proc.Error(err)
 			return
 		}
 
@@ -83,21 +73,18 @@ func (c *client) RegisterAndPoll(URL, body string, delay int, interval time.Dura
 		for range ticker.C {
 			sr, err := c.state(rr.ID)
 			if err != nil {
-				errc <- stdout.Error(err)
+				proc.Error(err)
 			} else {
-				for _, v := range stdout.State(sr) {
-					out <- v
-				}
+				proc.State(sr)
 			}
 
-			if isFinal(sr, err) {
-				succ <- isSuccess(sr, err)
+			if proc.IsFinished() {
 				break
 			}
 		}
 	}()
 
-	return out, errc, succ
+	return proc
 }
 
 // isFinal returns if StateResponse or err is a final state
@@ -106,7 +93,7 @@ func isFinal(state *StateResponse, err error) bool {
 		return state.Status == "failed" || state.Status == "succeeded" || state.Status == "timeout"
 	}
 
-	if err == errUnauthorized {
+	if err == ErrUnauthorized {
 		return true
 	}
 
@@ -180,9 +167,9 @@ func (c *client) execute(req *http.Request, codeWanted int) ([]byte, error) {
 
 	switch c := resp.StatusCode; {
 	case c == 401:
-		return nil, errUnauthorized
+		return nil, ErrUnauthorized
 	case c == 429:
-		return nil, errTooManyRequests
+		return nil, ErrTooManyRequests
 	case c != codeWanted:
 		return nil, fmt.Errorf("wrong response registering webhook: %s, %s\n", resp.Status, b)
 	}

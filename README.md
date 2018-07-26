@@ -6,6 +6,10 @@ Timehook CLI client is a client implementation to use with [https://api.timehook
 
 ## Usage
 
+##### Use executable (recommended)
+
+Download at [releases](https://github.com/timehook/cli-client/releases)
+
 ##### Compile on your own
 
 1. Download or clone the repo.
@@ -24,7 +28,7 @@ With defaults:
     
 With custom values:
 
-    ./bin/timehook --delay 11 --url https://your-url.com body --body '{"bar" : "bar"}'
+    ./bin/timehook --sec 11 --url https://your-url.com body --body '{"bar" : "bar"}'
       
       
 For further info:
